@@ -715,6 +715,13 @@ namespace Xamarin.Forms.CustomAttributes
 			PlaceholderColor
 		}
 
+		public enum Segments
+		{
+			Color,
+			Image,
+			SelectedIndexChanged
+		}
+
 		public enum Slider
 		{
 			Minimum,

@@ -171,6 +171,9 @@ namespace Xamarin.Forms.Platform
 
 	[RenderWith(typeof(SwipeViewRenderer))]
 	internal class _SwipeViewRenderer { }
+
+	[RenderWith(typeof(SegmentsRenderer))]
+	internal class _SegmentsRenderer { }
 }
 
 

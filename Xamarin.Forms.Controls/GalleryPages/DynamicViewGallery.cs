@@ -37,7 +37,7 @@ namespace Xamarin.Forms.Controls
 				{ nameof(ListView), (() => new ListView(), null) },
 				{ nameof(BoxView), (() => new BoxView(), null) },
 				{ nameof(CheckBox), (() => new CheckBox(), null) },
-
+				{ nameof(Segments), GetSegments() }
 			};
 
 		internal static HashSet<string> ExceptProperties = new HashSet<string>
@@ -524,6 +524,67 @@ namespace Xamarin.Forms.Controls
 					new NamedAction {
 						Name = "Clear",
 						Action = (p) => (p as Picker).Items.Clear()
+					}
+				}
+			);
+		}
+
+		static (Func<View> ctor, NamedAction[] methods) GetSegments()
+		{
+			var texts = new List<string>
+			{
+				"Item 1",
+				"Item 2",
+				"Item 3"
+			};
+
+			var icons = new List<string> {
+				"https://raw.githubusercontent.com/xamarin/Xamarin.Forms/master/Xamarin.Forms.Controls/coffee.png",
+				"https://raw.githubusercontent.com/xamarin/Xamarin.Forms/master/Xamarin.Forms.Controls/coffee.png",
+				"https://raw.githubusercontent.com/xamarin/Xamarin.Forms/master/Xamarin.Forms.Controls/coffee.png"
+			};
+
+			return (ctor: () =>
+			{
+				var segments = new Segments();
+				if (segments.DisplayMode == SegmentMode.Text)
+					segments.ItemsSource = texts;
+				else if (segments.DisplayMode == SegmentMode.Image)
+					segments.ItemsSource = icons;
+				return segments;
+			}, methods: new[] {
+					new NamedAction {
+						Name = "Add Text Item",
+						Action = (s) => (s as Segments).Items.Add($"Item {(s as Segments).Items.Count+1}")
+					},
+					new NamedAction {
+						Name = "Remove Middle Item",
+						Action = (s) => {
+							var segments = (Segments)s;
+							if (segments.Items.Count > 0)
+								segments.Items.RemoveAt(segments.Items.Count / 2);
+						}
+					},
+					new NamedAction {
+						Name = "Remove Last Item",
+						Action = (s) => {
+							var segments = (Segments)s;
+							if (segments.Items.Count > 0)
+								segments.Items.RemoveAt(segments.Items.Count - 1);
+						}
+					},
+					new NamedAction
+					{
+						Name = "Switch to Images",
+						Action = (s) => (s as Segments).DisplayMode = SegmentMode.Image
+					},
+					new NamedAction {
+						Name = "Add Image Item",
+						Action = (s) => (s as Segments).Items.Add(icons[0])
+					},
+					new NamedAction {
+						Name = "Clear",
+						Action = (s) => (s as Segments).Items.Clear()
 					}
 				}
 			);

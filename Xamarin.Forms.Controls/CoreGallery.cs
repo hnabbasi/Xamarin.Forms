@@ -349,6 +349,7 @@ namespace Xamarin.Forms.Controls
 				new GalleryPageFactory(() => new ScrollGallery(ScrollOrientation.Horizontal), "ScrollView Gallery Horizontal"),
 				new GalleryPageFactory(() => new ScrollGallery(ScrollOrientation.Both), "ScrollView Gallery 2D"),
 				new GalleryPageFactory(() => new SearchBarCoreGalleryPage(), "SearchBar Gallery"),
+				new GalleryPageFactory(() => new SegmentsCoreGalleryPage(), "Segments Gallery"),
 				new GalleryPageFactory(() => new SliderCoreGalleryPage(), "Slider Gallery"),
 				new GalleryPageFactory(() => new StepperCoreGalleryPage(), "Stepper Gallery"),
 				new GalleryPageFactory(() => new SwitchCoreGalleryPage(), "Switch Gallery"),
