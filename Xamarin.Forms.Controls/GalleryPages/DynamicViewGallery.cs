@@ -554,11 +554,17 @@ namespace Xamarin.Forms.Controls
 				return segments;
 			}, methods: new[] {
 					new NamedAction {
-						Name = "Add Text Item",
-						Action = (s) => (s as Segments).Items.Add($"Item {(s as Segments).Items.Count+1}")
+						Name = "Add Segment",
+						Action = (s) => {
+							var seg = s as Segments;
+							if(seg.DisplayMode == SegmentMode.Text)
+								seg.Items.Add($"Item {(s as Segments).Items.Count+1}");
+							if(seg.DisplayMode == SegmentMode.Image)
+								seg.Items.Add(icons[0]);
+							}
 					},
 					new NamedAction {
-						Name = "Remove Middle Item",
+						Name = "Remove Middle Segment",
 						Action = (s) => {
 							var segments = (Segments)s;
 							if (segments.Items.Count > 0)
@@ -566,21 +572,12 @@ namespace Xamarin.Forms.Controls
 						}
 					},
 					new NamedAction {
-						Name = "Remove Last Item",
+						Name = "Remove Last Segment",
 						Action = (s) => {
 							var segments = (Segments)s;
 							if (segments.Items.Count > 0)
 								segments.Items.RemoveAt(segments.Items.Count - 1);
 						}
-					},
-					new NamedAction
-					{
-						Name = "Switch to Images",
-						Action = (s) => (s as Segments).DisplayMode = SegmentMode.Image
-					},
-					new NamedAction {
-						Name = "Add Image Item",
-						Action = (s) => (s as Segments).Items.Add(icons[0])
 					},
 					new NamedAction {
 						Name = "Clear",

@@ -62,9 +62,12 @@ namespace Xamarin.Forms.Platform.iOS
 					// Not native to iOS OTB.
 					break;
 				case SegmentMode.Image:
-					var img = ((ImageSource)segment).GetNativeImageAsync().Result; // hmm...
+					var tsk = ((ImageSource)segment).GetNativeImageAsync(); // hmm...
+					var img = tsk.Result;
 					if (img != null)
 						Control.InsertSegment(img, position, false);
+					else
+						Console.WriteLine("ImageSource is null");
 					break;
 				default:
 				case SegmentMode.Text:
