@@ -2,7 +2,6 @@
 using Android.Content;
 using Android.Views;
 using Android.Widget;
-using System.ComponentModel;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Util;
@@ -10,18 +9,26 @@ using AColor = Android.Graphics.Color;
 using AViews = Android.Views;
 using ARes = Android.Resource;
 using Java.Util;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+using Xamarin.Forms.Internals;
+using Xamarin.Forms.Platform.Android;
+using System.Threading.Tasks;
 
 namespace Xamarin.Forms.Platform.Android
 {
 	public class FormsSegments : RadioGroup, IDisposable
 	{
 		private readonly Context _context;
-		readonly float _defaultControlHeight = 30.0f;
+		readonly float _defaultControlHeight = 32.0f;
 		readonly float _defaultTextSize = 15.0f;
-		readonly float _defaultStrokeWidth = 3.0f;
+		readonly float _defaultStrokeWidth = 2.5f;
 		readonly float _defaultCornerRadius = 6.0f;
+		readonly int _defaultButtonPadding = 16;
 
-		public string[] Children { get; set; }
+		readonly SegmentMode _mode = SegmentMode.Image;
+
+		public IList<string> Children { get; set; } = new List<string>();
 		public AColor TintColor { get; set; } = AColor.Rgb(14, 98, 255);
 
 		private RadioButton _currentSegment;
@@ -51,14 +58,19 @@ namespace Xamarin.Forms.Platform.Android
 		int _cornerRadius;
 		bool _disposed;
 
-		public FormsSegments(Context context) : this(context, new string[] { "Not Set", "Not Set" }) { }
-
-		public FormsSegments(Context context, string[] segments) : base(context)
+		public FormsSegments(Context context, IList<string> segments) : base(context)
 		{
 			_context = context;
 			Children = segments;
+			//((INotifyCollectionChanged)Children).CollectionChanged += CollectionChanged;
 			Build();
 		}
+
+		//private void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		//{
+		//	//Build();
+		//	InitializeSegments();
+		//}
 
 		void Build()
 		{
@@ -74,16 +86,25 @@ namespace Xamarin.Forms.Platform.Android
 
 			Orientation = Orientation.Horizontal;
 			LayoutParameters = new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent);
+			InitializeSegments();
+			CheckedChange += OnCheckChanged;
+		}
 
-			for (var i = 0; i < Children.Length; i++)
+		void InitializeSegments()
+		{
+			//RemoveViews(0, Children.Count - 1);
+			for (var i = 0; i < Children.Count; i++)
 			{
-				var position = i == 0 ? Position.Left : i == Children.Length - 1 ? Position.Right : Position.Middle;
+				var position = i == 0 ? Position.Left : i == Children.Count - 1 ? Position.Right : Position.Middle;
 				var rb = GetRadioButton(Children[i], position);
 				ConfigureRadioButton(i, rb);
 				AddView(rb);
 			}
+		}
 
-			CheckedChange += OnCheckChanged;
+		void InsertSegment(string title)
+		{
+
 		}
 
 		private void OnCheckChanged(object sender, CheckedChangeEventArgs e)
@@ -91,7 +112,7 @@ namespace Xamarin.Forms.Platform.Android
 			//var rb = FindViewById<RadioButton>(e.CheckedId);
 			//SetSegment(rb);
 			//var index = IndexOfChild(rb);
-			////ConfigureRadioButton(index, rb);
+			//ConfigureRadioButton(index, rb);
 
 			CurrentSegment = FindViewById<RadioButton>(e.CheckedId);
 			SegmentSelected?.Invoke(this, new SelectedPositionChangedEventArgs(IndexOfChild(CurrentSegment)));
@@ -146,29 +167,50 @@ namespace Xamarin.Forms.Platform.Android
 				TextAlignment = AViews.TextAlignment.Center
 			};
 
-			rb.SetButtonDrawable(null);
+			rb.SetPadding(_defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding);
 			rb.SetBackground(GetRadioButtonStateListDrawable(position));
 			rb.LayoutParameters = new RadioGroup.LayoutParams(0, LayoutParams.MatchParent, 1.0f);
 			rb.SetHeight(_buttonHeight);
 			rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
 			rb.SetAllCaps(true);
 			rb.SetTypeface(null, TypefaceStyle.Bold);
+
+			if (_mode == SegmentMode.Image)
+			{
+				rb.Text = "Image";
+
+				var icon = GetImage(title);
+				rb.SetButtonDrawable(null);
+				rb.SetCompoundDrawablesWithIntrinsicBounds(
+					icon,
+					icon,
+					icon,
+					icon);
+
+			}
+
 			return rb;
 		}
 
-		RadioButton GetRadioButton(BitmapDrawable image, Position position)
+		private Drawable GetImage(ImageSource filePath)
 		{
-			var rb = new RadioButton(_context)
-			{
-				Text = null,
-				Gravity = GravityFlags.Center,
-			};
+			var tcs = new TaskCompletionSource<Drawable>();
 
-			rb.SetButtonDrawable(image);
-			rb.SetBackground(GetRadioButtonStateListDrawable(position));
-			rb.LayoutParameters = new RadioGroup.LayoutParams(0, LayoutParams.MatchParent, 1.0f);
-			rb.SetHeight(_buttonHeight);
-			return rb;
+			Task.Run(async () => {
+				try
+				{
+					var result = await ResourceManager.GetFormsDrawableAsync(Context, filePath);
+					tcs.SetResult(result);
+				}
+				catch (Exception ex)
+				{
+					tcs.SetException(ex);
+				}
+			});
+			//	.ContinueWith((task) => {
+			//	Console.WriteLine(">>> Something went wrong");
+			//}, TaskContinuationOptions.OnlyOnFaulted);
+			return tcs.Task.Result;
 		}
 
 		StateListDrawable GetRadioButtonStateListDrawable(Position position)
@@ -235,8 +277,10 @@ namespace Xamarin.Forms.Platform.Android
 
 			_disposed = true;
 			if (disposing)
+			{
+				//((INotifyCollectionChanged)Children).CollectionChanged += CollectionChanged;
 				CheckedChange -= OnCheckChanged;
-
+			}
 			base.Dispose(disposing);
 		}
 	}

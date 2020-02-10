@@ -194,6 +194,9 @@ namespace Xamarin.Forms
 		public bool IsColorSet => IsSet(ColorProperty);
 	}
 
+	/// <summary>
+	/// Segment mode e.g. Text, Image, Both (Android ONLY)
+	/// </summary>
 	public enum SegmentMode
 	{
 		Text,
