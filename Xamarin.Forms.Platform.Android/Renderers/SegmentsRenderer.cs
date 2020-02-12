@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -56,12 +58,22 @@ namespace Xamarin.Forms.Platform.Android
 
 		void InitializeControl(IList<string> segments)
 		{
-			_control = new FormsSegments(_context, segments);
+			_control = new FormsSegments(_context);
 			_control.SegmentSelected += SegmentSelected;
-			_control.Children = segments;
-			SetNativeControl(_control);
 
 			((INotifyCollectionChanged)Element.Items).CollectionChanged += SegmentsCollectionChanged;
+
+			PopulateSegments(segments);
+
+			SetNativeControl(_control);
+		}
+
+		void PopulateSegments(IList<string> segments)
+		{
+			for (int i = 0; i < segments.Count; i++)
+			{
+				_control.Children.Add(segments[i]);
+			}
 		}
 
 		private void SegmentsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -69,15 +81,10 @@ namespace Xamarin.Forms.Platform.Android
 			switch (e.Action)
 			{
 				case NotifyCollectionChangedAction.Add:
-					//var index = e.NewStartingIndex;
-					foreach (var segment in e.NewItems)
+					for (int s = 0; s < e.NewItems.Count; s++)
 					{
-						_control.Children.Add(segment.ToString());
+						_control.Children.Add(e.NewItems[s].ToString());
 					}
-					//for (int s = 0; s < e.NewItems.Count; s++)
-					//{
-					//	_control.Children.Add(e.NewItems[index++].ToString());
-					//}
 					break;
 				case NotifyCollectionChangedAction.Remove:
 					for (int s = 0; s < e.OldItems.Count; s++)
@@ -87,7 +94,7 @@ namespace Xamarin.Forms.Platform.Android
 					break;
 				case NotifyCollectionChangedAction.Reset:
 				default:
-					InitializeControl(Element.Items);
+					_control.Children.Clear();
 					break;
 			}
 		}
@@ -128,7 +135,10 @@ namespace Xamarin.Forms.Platform.Android
 
 		protected override void Dispose(bool disposing)
 		{
-			_control.SegmentSelected -= SegmentSelected;
+			if (!disposing)
+				return;
+
+			InvalidateControl();
 		}
 	}
 }

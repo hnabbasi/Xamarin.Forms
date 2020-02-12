@@ -8,12 +8,13 @@ using Android.Util;
 using AColor = Android.Graphics.Color;
 using AViews = Android.Views;
 using ARes = Android.Resource;
-using Java.Util;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using Xamarin.Forms.Internals;
 using Xamarin.Forms.Platform.Android;
 using System.Threading.Tasks;
+using System.Collections;
+using System.Collections.ObjectModel;
 
 namespace Xamarin.Forms.Platform.Android
 {
@@ -28,8 +29,19 @@ namespace Xamarin.Forms.Platform.Android
 
 		readonly SegmentMode _mode = SegmentMode.Image;
 
-		public IList<string> Children { get; set; } = new List<string>();
+		int RightIndex => Children.Count - 1;
+
 		public AColor TintColor { get; set; } = AColor.Rgb(14, 98, 255);
+
+		private ObservableCollection<string> _children = new ObservableCollection<string>(); //new LockableObservableListWrapper();
+		public ObservableCollection<string> Children
+		{
+			get => _children;
+			set {
+				_children = value;
+				//InitializeSegments();
+			}
+		}
 
 		private RadioButton _currentSegment;
 		public RadioButton CurrentSegment
@@ -58,19 +70,39 @@ namespace Xamarin.Forms.Platform.Android
 		int _cornerRadius;
 		bool _disposed;
 
-		public FormsSegments(Context context, IList<string> segments) : base(context)
+		public FormsSegments(Context context) : base(context)
 		{
 			_context = context;
-			Children = segments;
-			//((INotifyCollectionChanged)Children).CollectionChanged += CollectionChanged;
+			Children.CollectionChanged += CollectionChanged;
 			Build();
 		}
 
-		//private void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
-		//{
-		//	//Build();
-		//	InitializeSegments();
-		//}
+		private void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			switch (e.Action)
+			{
+				case NotifyCollectionChangedAction.Add:
+					var startingIndex = e.NewStartingIndex;
+					for (int s = 0; s < e.NewItems.Count; s++)
+					{
+						for (int i = 0; i < e.NewItems.Count; i++)
+						{
+							InsertSegment(e.NewItems[i].ToString(), startingIndex++);
+						}
+					}
+					break;
+				case NotifyCollectionChangedAction.Remove:
+					for (int s = 0; s < e.OldItems.Count; s++)
+					{
+						RemoveViewAt(e.OldStartingIndex);
+					}
+					break;
+				case NotifyCollectionChangedAction.Reset:
+				default:
+					RemoveAllViews();
+					break;
+			}
+		}
 
 		void Build()
 		{
@@ -86,25 +118,24 @@ namespace Xamarin.Forms.Platform.Android
 
 			Orientation = Orientation.Horizontal;
 			LayoutParameters = new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent);
-			InitializeSegments();
+			//InitializeSegments();
 			CheckedChange += OnCheckChanged;
 		}
 
-		void InitializeSegments()
+		public void InitializeSegments()
 		{
-			//RemoveViews(0, Children.Count - 1);
 			for (var i = 0; i < Children.Count; i++)
 			{
-				var position = i == 0 ? Position.Left : i == Children.Count - 1 ? Position.Right : Position.Middle;
-				var rb = GetRadioButton(Children[i], position);
-				ConfigureRadioButton(i, rb);
-				AddView(rb);
+				InsertSegment(Children[i].ToString(), i);
 			}
 		}
 
-		void InsertSegment(string title)
+		void InsertSegment(string title, int index)
 		{
-
+			var position = index == 0 ? Position.Left : index == Children.Count - 1 ? Position.Right : Position.Middle;
+			var rb = GetRadioButton(title, position);
+			ConfigureRadioButton(index, rb);
+			AddView(rb);
 		}
 
 		private void OnCheckChanged(object sender, CheckedChangeEventArgs e)
@@ -186,9 +217,7 @@ namespace Xamarin.Forms.Platform.Android
 					icon,
 					icon,
 					icon);
-
 			}
-
 			return rb;
 		}
 
@@ -196,7 +225,8 @@ namespace Xamarin.Forms.Platform.Android
 		{
 			var tcs = new TaskCompletionSource<Drawable>();
 
-			Task.Run(async () => {
+			Task.Run(async () =>
+			{
 				try
 				{
 					var result = await ResourceManager.GetFormsDrawableAsync(Context, filePath);
@@ -207,9 +237,7 @@ namespace Xamarin.Forms.Platform.Android
 					tcs.SetException(ex);
 				}
 			});
-			//	.ContinueWith((task) => {
-			//	Console.WriteLine(">>> Something went wrong");
-			//}, TaskContinuationOptions.OnlyOnFaulted);
+
 			return tcs.Task.Result;
 		}
 
@@ -278,7 +306,7 @@ namespace Xamarin.Forms.Platform.Android
 			_disposed = true;
 			if (disposing)
 			{
-				//((INotifyCollectionChanged)Children).CollectionChanged += CollectionChanged;
+				Children.CollectionChanged -= CollectionChanged;
 				CheckedChange -= OnCheckChanged;
 			}
 			base.Dispose(disposing);
