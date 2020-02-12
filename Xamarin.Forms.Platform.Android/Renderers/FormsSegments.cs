@@ -29,19 +29,30 @@ namespace Xamarin.Forms.Platform.Android
 
 		readonly SegmentMode _mode = SegmentMode.Image;
 
-		int RightIndex => Children.Count - 1;
-
-		public AColor TintColor { get; set; } = AColor.Rgb(14, 98, 255);
-
-		private ObservableCollection<string> _children = new ObservableCollection<string>(); //new LockableObservableListWrapper();
-		public ObservableCollection<string> Children
+		private AColor _tintColor = AColor.Rgb(14, 98, 255);
+		public AColor TintColor
 		{
-			get => _children;
-			set {
-				_children = value;
-				//InitializeSegments();
+			get => _tintColor;
+			set { _tintColor = value;
+				for (int i = 0; i < ChildCount; i++)
+				{
+					UpdateButtonColors((RadioButton)GetChildAt(i));
+				}
 			}
 		}
+
+		AColor _backgroundColor = AColor.Transparent;
+		public AColor BackgroundColor
+		{
+			get => _backgroundColor;
+			set
+			{
+				_backgroundColor = value;
+				SetBackgroundColor(value);
+			}
+		}
+
+		public ObservableCollection<string> Children { get; } = new ObservableCollection<string>();
 
 		private RadioButton _currentSegment;
 		public RadioButton CurrentSegment
@@ -51,8 +62,7 @@ namespace Xamarin.Forms.Platform.Android
 			{
 				UnsetSegment(_currentSegment);
 				_currentSegment = value;
-				SetSegment(value);
-				UpdateButtonColors(value);
+				SetSegment(_currentSegment);
 			}
 		}
 
@@ -62,7 +72,6 @@ namespace Xamarin.Forms.Platform.Android
 		AColor _unselectedTintColor;
 		AColor _unSelectedTextColor;
 		AColor _selectedTextColor;
-		AColor _backgroundColor = Color.White.ToAndroid();
 		AColor _disabledColor = AColor.Gray;
 
 		int _buttonHeight;
@@ -79,29 +88,29 @@ namespace Xamarin.Forms.Platform.Android
 
 		private void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
-			switch (e.Action)
-			{
-				case NotifyCollectionChangedAction.Add:
-					var startingIndex = e.NewStartingIndex;
-					for (int s = 0; s < e.NewItems.Count; s++)
-					{
-						for (int i = 0; i < e.NewItems.Count; i++)
-						{
-							InsertSegment(e.NewItems[i].ToString(), startingIndex++);
-						}
-					}
-					break;
-				case NotifyCollectionChangedAction.Remove:
-					for (int s = 0; s < e.OldItems.Count; s++)
-					{
-						RemoveViewAt(e.OldStartingIndex);
-					}
-					break;
-				case NotifyCollectionChangedAction.Reset:
-				default:
-					RemoveAllViews();
-					break;
-			}
+			InitializeSegments();
+
+			//switch (e.Action)
+			//{
+			//	case NotifyCollectionChangedAction.Add:
+			//		InitializeSegments();
+			//		//var startingIndex = e.NewStartingIndex;
+			//		//for (int i = 0; i < e.NewItems.Count; i++)
+			//		//{
+			//		//	InsertSegment(e.NewItems[i].ToString(), startingIndex++);
+			//		//}
+			//		break;
+			//	case NotifyCollectionChangedAction.Remove:
+			//		for (int s = 0; s < e.OldItems.Count; s++)
+			//		{
+			//			RemoveViewAt(e.OldStartingIndex);
+			//		}
+			//		break;
+			//	case NotifyCollectionChangedAction.Reset:
+			//	default:
+			//		RemoveAllViews();
+			//		break;
+			//}
 		}
 
 		void Build()
@@ -110,6 +119,7 @@ namespace Xamarin.Forms.Platform.Android
 			_buttonHeight = (int)_context.ToPixels(_defaultControlHeight);
 			_strokeWidth = (int)_context.ToPixels(_defaultStrokeWidth);
 			_cornerRadius = (int)_context.ToPixels(_defaultCornerRadius);
+			SetBackgroundColor(_backgroundColor);
 
 			// Temporarily disabling these
 			_unselectedTintColor = _backgroundColor;// Element.IsUnselectedTintColorSet() ? Element.UnselectedTintColor.ToAndroid() : _backgroundColor;
@@ -124,10 +134,16 @@ namespace Xamarin.Forms.Platform.Android
 
 		public void InitializeSegments()
 		{
+			if (ChildCount > 0)
+				RemoveAllViews();
+
 			for (var i = 0; i < Children.Count; i++)
 			{
 				InsertSegment(Children[i].ToString(), i);
 			}
+
+			if(ChildCount > 0)
+				CurrentSegment = (RadioButton)GetChildAt(0);
 		}
 
 		void InsertSegment(string title, int index)
@@ -140,11 +156,6 @@ namespace Xamarin.Forms.Platform.Android
 
 		private void OnCheckChanged(object sender, CheckedChangeEventArgs e)
 		{
-			//var rb = FindViewById<RadioButton>(e.CheckedId);
-			//SetSegment(rb);
-			//var index = IndexOfChild(rb);
-			//ConfigureRadioButton(index, rb);
-
 			CurrentSegment = FindViewById<RadioButton>(e.CheckedId);
 			SegmentSelected?.Invoke(this, new SelectedPositionChangedEventArgs(IndexOfChild(CurrentSegment)));
 		}
@@ -159,18 +170,25 @@ namespace Xamarin.Forms.Platform.Android
 			{
 				UnsetSegment(rb);
 			}
-
-			UpdateButtonColors(rb);
 		}
 
 		void SetSegment(RadioButton rb)
 		{
-			rb?.SetTextColor(_selectedTextColor);
+			if (rb == null)
+				return;
+
+			rb.SetTextColor(_selectedTextColor);
+			UpdateButtonColors(rb);
 		}
 
 		void UnsetSegment(RadioButton rb)
 		{
-			rb?.SetTextColor(_unSelectedTextColor);
+			if (rb == null)
+				return;
+
+			rb.SetTextColor(TintColor);
+			//rb?.SetTextColor(_unSelectedTextColor);
+			UpdateButtonColors(rb);
 		}
 
 		void UpdateButtonColors(RadioButton rb)
@@ -182,9 +200,11 @@ namespace Xamarin.Forms.Platform.Android
 			// Make sure it works on API < 18
 			var _selectedShape = (GradientDrawable)(children[0] as InsetDrawable)?.Drawable;
 			_selectedShape.SetColor(TintColor);
+			_selectedShape.SetStroke(_strokeWidth, TintColor);
 
 			var _unselectedShape = children[1] is GradientDrawable ? (GradientDrawable)children[1] : (GradientDrawable)((InsetDrawable)children[1]).Drawable;
 			_unselectedShape.SetColor(_unselectedTintColor);
+			_unselectedShape.SetStroke(_strokeWidth, TintColor);
 		}
 
 		#region Drawable Resources
@@ -201,7 +221,7 @@ namespace Xamarin.Forms.Platform.Android
 			rb.SetPadding(_defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding);
 			rb.SetBackground(GetRadioButtonStateListDrawable(position));
 			rb.LayoutParameters = new RadioGroup.LayoutParams(0, LayoutParams.MatchParent, 1.0f);
-			rb.SetHeight(_buttonHeight);
+			//rb.SetHeight(_buttonHeight);
 			rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
 			rb.SetAllCaps(true);
 			rb.SetTypeface(null, TypefaceStyle.Bold);
