@@ -126,6 +126,9 @@ namespace Xamarin.Forms.Platform.Android
 			{
 				Control.TintColor = Element.Color.ToAndroid();
 			}
+
+			if (e.Is(Segments.DisplayModeProperty))
+				Control.DisplayMode = Element.DisplayMode;
 		}
 
 		RadioButton GetSegment(int index)

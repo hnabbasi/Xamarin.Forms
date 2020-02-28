@@ -1,20 +1,17 @@
 ﻿using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.Threading.Tasks;
 using Android.Content;
-using Android.Views;
-using Android.Widget;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.Util;
+using Android.Views;
+using Android.Widget;
 using AColor = Android.Graphics.Color;
-using AViews = Android.Views;
 using ARes = Android.Resource;
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using Xamarin.Forms.Internals;
-using Xamarin.Forms.Platform.Android;
-using System.Threading.Tasks;
-using System.Collections;
-using System.Collections.ObjectModel;
+using AContentRes = Android.Content.Res;
+using AViews = Android.Views;
 
 namespace Xamarin.Forms.Platform.Android
 {
@@ -24,24 +21,54 @@ namespace Xamarin.Forms.Platform.Android
 		readonly float _defaultControlHeight = 32.0f;
 		readonly float _defaultTextSize = 15.0f;
 		readonly float _defaultStrokeWidth = 2.5f;
-		readonly float _defaultCornerRadius = 6.0f;
 		readonly int _defaultButtonPadding = 16;
 
-		readonly SegmentMode _mode = SegmentMode.Image;
+		private SegmentMode _mode;
+		public SegmentMode DisplayMode
+		{
+			get => _mode;
+			set
+			{
+				_mode = value;
+				InitializeSegments();
+			}
+		}
+
+		//TODO: Test this on ANDROID only using .On<>()
+		private float _cornerRadius = 8.0f;
+		public float CornerRadius
+		{
+			get => _cornerRadius;
+			set {
+				_cornerRadius = _context.ToPixels(value);
+				//InitializeSegments();
+
+				if (ChildCount > 0)
+				{
+					RemoveViewAt(0);
+					AddView(GetRadioButton(Children[0], Position.Left));
+				}
+
+				if(ChildCount > 1)
+				{
+					RemoveViewAt(Children.Count - 1);
+					AddView(GetRadioButton(Children[Children.Count - 1], Position.Right));
+				}
+			}
+		}
 
 		private AColor _tintColor = AColor.Rgb(14, 98, 255);
 		public AColor TintColor
 		{
 			get => _tintColor;
-			set { _tintColor = value;
-				for (int i = 0; i < ChildCount; i++)
-				{
-					UpdateButtonColors((RadioButton)GetChildAt(i));
-				}
+			set
+			{
+				_tintColor = value;
+				InitializeSegments();
 			}
 		}
 
-		AColor _backgroundColor = AColor.Transparent;
+		private AColor _backgroundColor = AColor.Transparent;
 		public AColor BackgroundColor
 		{
 			get => _backgroundColor;
@@ -60,9 +87,7 @@ namespace Xamarin.Forms.Platform.Android
 			get => _currentSegment;
 			set
 			{
-				UnsetSegment(_currentSegment);
 				_currentSegment = value;
-				SetSegment(_currentSegment);
 			}
 		}
 
@@ -76,7 +101,6 @@ namespace Xamarin.Forms.Platform.Android
 
 		int _buttonHeight;
 		int _strokeWidth;
-		int _cornerRadius;
 		bool _disposed;
 
 		public FormsSegments(Context context) : base(context)
@@ -89,46 +113,23 @@ namespace Xamarin.Forms.Platform.Android
 		private void CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			InitializeSegments();
-
-			//switch (e.Action)
-			//{
-			//	case NotifyCollectionChangedAction.Add:
-			//		InitializeSegments();
-			//		//var startingIndex = e.NewStartingIndex;
-			//		//for (int i = 0; i < e.NewItems.Count; i++)
-			//		//{
-			//		//	InsertSegment(e.NewItems[i].ToString(), startingIndex++);
-			//		//}
-			//		break;
-			//	case NotifyCollectionChangedAction.Remove:
-			//		for (int s = 0; s < e.OldItems.Count; s++)
-			//		{
-			//			RemoveViewAt(e.OldStartingIndex);
-			//		}
-			//		break;
-			//	case NotifyCollectionChangedAction.Reset:
-			//	default:
-			//		RemoveAllViews();
-			//		break;
-			//}
 		}
 
 		void Build()
 		{
-			//_strokeColor = TintColor;
 			_buttonHeight = (int)_context.ToPixels(_defaultControlHeight);
 			_strokeWidth = (int)_context.ToPixels(_defaultStrokeWidth);
-			_cornerRadius = (int)_context.ToPixels(_defaultCornerRadius);
-			SetBackgroundColor(_backgroundColor);
 
 			// Temporarily disabling these
 			_unselectedTintColor = _backgroundColor;// Element.IsUnselectedTintColorSet() ? Element.UnselectedTintColor.ToAndroid() : _backgroundColor;
 			_selectedTextColor = AColor.White;// Element.SelectedTextColor.ToAndroid();
 			_unSelectedTextColor = TintColor;// Element.IsUnselectedTextColorSet() ? Element.UnselectedTextColor.ToAndroid() : TintColor;
 
+			//_strokeColor = TintColor;
+			SetBackgroundColor(_backgroundColor);
+
 			Orientation = Orientation.Horizontal;
 			LayoutParameters = new LayoutParams(LayoutParams.MatchParent, LayoutParams.WrapContent);
-			//InitializeSegments();
 			CheckedChange += OnCheckChanged;
 		}
 
@@ -136,22 +137,52 @@ namespace Xamarin.Forms.Platform.Android
 		{
 			if (ChildCount > 0)
 				RemoveAllViews();
-
+			
 			for (var i = 0; i < Children.Count; i++)
 			{
-				InsertSegment(Children[i].ToString(), i);
+				var rb = InsertSegment(Children[i].ToString(), i);
+				if (i == 0)
+					rb.Checked = true;
 			}
-
-			if(ChildCount > 0)
-				CurrentSegment = (RadioButton)GetChildAt(0);
 		}
 
-		void InsertSegment(string title, int index)
+		RadioButton InsertSegment(string title, int index)
 		{
-			var position = index == 0 ? Position.Left : index == Children.Count - 1 ? Position.Right : Position.Middle;
+			var isLeft = index == 0;
+			var position = isLeft ? Position.Left : index == Children.Count - 1 ? Position.Right : Position.Middle;
 			var rb = GetRadioButton(title, position);
-			ConfigureRadioButton(index, rb);
 			AddView(rb);
+			return rb;
+		}
+
+		private AContentRes.ColorStateList TextColorSelector
+		{
+			get
+			{
+				return new AContentRes.ColorStateList(
+					new int[][] {
+						//states
+						new int[] { ARes.Attribute.StateChecked },
+						new int[] {-ARes.Attribute.StateChecked } },
+						//colors
+						new int[] { _selectedTextColor, TintColor }
+				);
+			}
+		}
+
+		private AContentRes.ColorStateList SegmentColorSelector
+		{
+			get
+			{
+				return new AContentRes.ColorStateList(
+						new int[][] {
+						//states
+						new int[] { ARes.Attribute.StateChecked },
+						new int[] {-ARes.Attribute.StateChecked } },
+							//colors
+							new int[] { TintColor, _unselectedTintColor }
+					);
+			}
 		}
 
 		private void OnCheckChanged(object sender, CheckedChangeEventArgs e)
@@ -159,54 +190,7 @@ namespace Xamarin.Forms.Platform.Android
 			CurrentSegment = FindViewById<RadioButton>(e.CheckedId);
 			SegmentSelected?.Invoke(this, new SelectedPositionChangedEventArgs(IndexOfChild(CurrentSegment)));
 		}
-
-		void ConfigureRadioButton(int i, RadioButton rb)
-		{
-			if (i == 0)
-			{
-				SetSegment(rb);
-			}
-			else
-			{
-				UnsetSegment(rb);
-			}
-		}
-
-		void SetSegment(RadioButton rb)
-		{
-			if (rb == null)
-				return;
-
-			rb.SetTextColor(_selectedTextColor);
-			UpdateButtonColors(rb);
-		}
-
-		void UnsetSegment(RadioButton rb)
-		{
-			if (rb == null)
-				return;
-
-			rb.SetTextColor(TintColor);
-			//rb?.SetTextColor(_unSelectedTextColor);
-			UpdateButtonColors(rb);
-		}
-
-		void UpdateButtonColors(RadioButton rb)
-		{
-			var gradientDrawable = (StateListDrawable)rb.Background;
-			var drawableContainerState = (DrawableContainer.DrawableContainerState)gradientDrawable.GetConstantState();
-			var children = drawableContainerState.GetChildren();
-
-			// Make sure it works on API < 18
-			var _selectedShape = (GradientDrawable)(children[0] as InsetDrawable)?.Drawable;
-			_selectedShape.SetColor(TintColor);
-			_selectedShape.SetStroke(_strokeWidth, TintColor);
-
-			var _unselectedShape = children[1] is GradientDrawable ? (GradientDrawable)children[1] : (GradientDrawable)((InsetDrawable)children[1]).Drawable;
-			_unselectedShape.SetColor(_unselectedTintColor);
-			_unselectedShape.SetStroke(_strokeWidth, TintColor);
-		}
-
+		
 		#region Drawable Resources
 
 		RadioButton GetRadioButton(string title, Position position)
@@ -225,13 +209,14 @@ namespace Xamarin.Forms.Platform.Android
 			rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
 			rb.SetAllCaps(true);
 			rb.SetTypeface(null, TypefaceStyle.Bold);
+			rb.SetButtonDrawable(null);
+			rb.SetTextColor(TextColorSelector);
 
 			if (_mode == SegmentMode.Image)
 			{
 				rb.Text = "Image";
 
 				var icon = GetImage(title);
-				rb.SetButtonDrawable(null);
 				rb.SetCompoundDrawablesWithIntrinsicBounds(
 					icon,
 					icon,
@@ -264,49 +249,26 @@ namespace Xamarin.Forms.Platform.Android
 		StateListDrawable GetRadioButtonStateListDrawable(Position position)
 		{
 			var drawable = new StateListDrawable();
-			drawable.AddState(new int[] { ARes.Attribute.StateChecked }, GetCheckedDrawable(position));
-			drawable.AddState(new int[] { -ARes.Attribute.StateChecked }, GetUncheckedDrawable(position));
+			drawable.AddState(new int[] { ARes.Attribute.StateChecked }, GetSegmentDrawable(position));
+			drawable.AddState(new int[] { -ARes.Attribute.StateChecked }, GetSegmentDrawable(position));
 			return drawable;
 		}
 
-		InsetDrawable GetCheckedDrawable(Position position)
+		InsetDrawable GetSegmentDrawable(Position position)
 		{
 			var rect = new GradientDrawable();
 			rect.SetShape(ShapeType.Rectangle);
-			rect.SetColor(TintColor);
 			rect.SetStroke(_strokeWidth, TintColor);
-
+			rect.SetColor(SegmentColorSelector);
+			
 			switch (position)
 			{
 				case Position.Left:
-					rect.SetCornerRadii(new float[] { _cornerRadius, _cornerRadius, 0, 0, 0, 0, _cornerRadius, _cornerRadius });
+					rect.SetCornerRadii(new float[] { CornerRadius, CornerRadius, 0, 0, 0, 0, CornerRadius, CornerRadius });
 					return new InsetDrawable(rect, 0);
 
 				case Position.Right:
-					rect.SetCornerRadii(new float[] { 0, 0, _cornerRadius, _cornerRadius, _cornerRadius, _cornerRadius, 0, 0 });
-					break;
-				default:
-					rect.SetCornerRadius(0);
-					break;
-			}
-
-			return new InsetDrawable(rect, -_strokeWidth, 0, 0, 0);
-		}
-
-		InsetDrawable GetUncheckedDrawable(Position position)
-		{
-			var rect = new GradientDrawable();
-			rect.SetShape(ShapeType.Rectangle);
-			rect.SetColor(_backgroundColor);
-			rect.SetStroke(_strokeWidth, TintColor);
-
-			switch (position)
-			{
-				case Position.Left:
-					rect.SetCornerRadii(new float[] { _cornerRadius, _cornerRadius, 0, 0, 0, 0, _cornerRadius, _cornerRadius });
-					return new InsetDrawable(rect, 0);
-				case Position.Right:
-					rect.SetCornerRadii(new float[] { 0, 0, _cornerRadius, _cornerRadius, _cornerRadius, _cornerRadius, 0, 0 });
+					rect.SetCornerRadii(new float[] { 0, 0, CornerRadius, CornerRadius, CornerRadius, CornerRadius, 0, 0 });
 					break;
 				default:
 					rect.SetCornerRadius(0);
@@ -336,7 +298,7 @@ namespace Xamarin.Forms.Platform.Android
 	/// <summary>
 	/// Position of the segment. Left, Middle, Right.
 	/// </summary>
-	enum Position
+	internal enum Position
 	{
 		Middle,
 		Left,
