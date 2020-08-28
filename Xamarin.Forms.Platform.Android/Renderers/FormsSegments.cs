@@ -34,26 +34,27 @@ namespace Xamarin.Forms.Platform.Android
 			}
 		}
 
-		//TODO: Test this on ANDROID only using .On<>()
 		private float _cornerRadius = 8.0f;
 		public float CornerRadius
 		{
 			get => _cornerRadius;
 			set {
 				_cornerRadius = _context.ToPixels(value);
-				//InitializeSegments();
 
-				if (ChildCount > 0)
-				{
-					RemoveViewAt(0);
-					AddView(GetRadioButton(Children[0], Position.Left));
-				}
+				//TODO: Fix this so only the end segments are updated
+				InitializeSegments();
 
-				if(ChildCount > 1)
-				{
-					RemoveViewAt(Children.Count - 1);
-					AddView(GetRadioButton(Children[Children.Count - 1], Position.Right));
-				}
+				//if (ChildCount > 0)
+				//{
+				//	RemoveViewAt(0);
+				//	AddView(GetRadioButton(Children[0], Position.Left));
+				//}
+
+				//if(ChildCount > 1)
+				//{
+				//	RemoveViewAt(Children.Count - 1);
+				//	AddView(GetRadioButton(Children[Children.Count - 1], Position.Right));
+				//}
 			}
 		}
 
@@ -195,33 +196,44 @@ namespace Xamarin.Forms.Platform.Android
 
 		RadioButton GetRadioButton(string title, Position position)
 		{
-			var rb = new RadioButton(_context)
-			{
-				Text = title,
-				Gravity = GravityFlags.Center,
-				TextAlignment = AViews.TextAlignment.Center
-			};
-
+			Drawable icon;
+			var rb = new RadioButton(_context);
 			rb.SetPadding(_defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding);
 			rb.SetBackground(GetRadioButtonStateListDrawable(position));
 			rb.LayoutParameters = new RadioGroup.LayoutParams(0, LayoutParams.MatchParent, 1.0f);
 			//rb.SetHeight(_buttonHeight);
-			rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
-			rb.SetAllCaps(true);
-			rb.SetTypeface(null, TypefaceStyle.Bold);
+			rb.Gravity = GravityFlags.Center;
 			rb.SetButtonDrawable(null);
-			rb.SetTextColor(TextColorSelector);
 
-			if (_mode == SegmentMode.Image)
-			{
-				rb.Text = "Image";
+			//TODO: Reconsider SegmentsViewItem to have title and image
+			switch (_mode)
+			{				
+				case SegmentMode.ImageLeft:
+					icon = GetImage(title);
+					rb.SetCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
+					break;
+				case SegmentMode.ImageTop:
+					icon = GetImage(title);
+					rb.SetCompoundDrawablesWithIntrinsicBounds(null, icon, null, null);
+					break;
+				case SegmentMode.ImageRight:
+					icon = GetImage(title);
+					rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, icon, null);
+					break;
+				case SegmentMode.ImageBottom:
+					icon = GetImage(title);
+					rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, null, icon);
+					break;
+				default:
+				case SegmentMode.Text:
+					rb.Text = title;
+					rb.TextAlignment = AViews.TextAlignment.Center;
 
-				var icon = GetImage(title);
-				rb.SetCompoundDrawablesWithIntrinsicBounds(
-					icon,
-					icon,
-					icon,
-					icon);
+					rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
+					rb.SetAllCaps(true);
+					rb.SetTypeface(null, TypefaceStyle.Bold);
+					rb.SetTextColor(TextColorSelector);
+					break;
 			}
 			return rb;
 		}

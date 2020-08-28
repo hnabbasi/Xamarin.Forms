@@ -11,9 +11,11 @@ using Android.Util;
 using Android.Widget;
 using Xamarin.Forms.Internals;
 using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
+using PlatformSegments = Xamarin.Forms.PlatformConfiguration.AndroidSpecific.Segments;
 
 namespace Xamarin.Forms.Platform.Android
 {
+	//TODO: Move over to FastRenderers
 	//public class SegmentsRenderer : FastRenderers.SegmentsRenderer
 	//{
 	//	[Obsolete("This constructor is obsolete as of version 2.5. Please use ButtonRenderer(Context) instead.")]
@@ -31,6 +33,9 @@ namespace Xamarin.Forms.Platform.Android
 	{
 		readonly Context _context;
 		FormsSegments _control;
+		Segments Segments => Element as Segments;
+
+		IPlatformElementConfiguration<PlatformConfiguration.Android, Segments> _platformElementConfiguration;
 
 		public SegmentsRenderer(Context context) : base(context)
 		{
@@ -129,11 +134,23 @@ namespace Xamarin.Forms.Platform.Android
 
 			if (e.Is(Segments.DisplayModeProperty))
 				Control.DisplayMode = Element.DisplayMode;
+
+			if (e.Is(PlatformSegments.CornerRadiusProperty)) {
+				Control.CornerRadius = (float) Segments.On<PlatformConfiguration.Android>().GetCornerRadius();
+			}
 		}
 
 		RadioButton GetSegment(int index)
 		{
 			return (RadioButton)Control?.GetChildAt(index);
+		}
+
+		IPlatformElementConfiguration<PlatformConfiguration.Android, Segments> OnThisPlatform()
+		{
+			if (_platformElementConfiguration == null)
+				_platformElementConfiguration = Element.OnThisPlatform();
+
+			return _platformElementConfiguration;
 		}
 
 		protected override void Dispose(bool disposing)

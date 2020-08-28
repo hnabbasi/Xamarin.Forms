@@ -549,7 +549,7 @@ namespace Xamarin.Forms.Controls
 				var segments = new Segments();
 				if (segments.DisplayMode == SegmentMode.Text)
 					segments.ItemsSource = texts;
-				else if (segments.DisplayMode == SegmentMode.Image)
+				else
 					segments.ItemsSource = icons;
 				return segments;
 			}, methods: new[] {
@@ -559,7 +559,7 @@ namespace Xamarin.Forms.Controls
 							var seg = s as Segments;
 							if(seg.DisplayMode == SegmentMode.Text)
 								seg.Items.Add($"Item {(s as Segments).Items.Count+1}");
-							if(seg.DisplayMode == SegmentMode.Image)
+							else
 								seg.Items.Add(icons[0]);
 							}
 					},

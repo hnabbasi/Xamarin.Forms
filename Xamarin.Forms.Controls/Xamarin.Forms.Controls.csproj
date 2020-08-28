@@ -160,6 +160,9 @@
     <Compile Update="CoreGalleryPages\SegmentsCoreGalleryPage.cs">
       <SubType></SubType>
     </Compile>
+    <Compile Update="GalleryPages\PlatformSpecificsGalleries\SegmentsPageAndroid.cs">
+      <SubType></SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Update="GalleryPages\CollectionViewGalleries\GroupingGalleries\BasicGrouping.xaml">
