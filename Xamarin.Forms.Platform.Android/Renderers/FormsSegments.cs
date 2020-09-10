@@ -18,7 +18,6 @@ namespace Xamarin.Forms.Platform.Android
 	public class FormsSegments : RadioGroup, IDisposable
 	{
 		private readonly Context _context;
-		readonly float _defaultControlHeight = 32.0f;
 		readonly float _defaultTextSize = 15.0f;
 		readonly float _defaultStrokeWidth = 2.5f;
 		readonly int _defaultButtonPadding = 16;
@@ -40,21 +39,7 @@ namespace Xamarin.Forms.Platform.Android
 			get => _cornerRadius;
 			set {
 				_cornerRadius = _context.ToPixels(value);
-
-				//TODO: Fix this so only the end segments are updated
 				InitializeSegments();
-
-				//if (ChildCount > 0)
-				//{
-				//	RemoveViewAt(0);
-				//	AddView(GetRadioButton(Children[0], Position.Left));
-				//}
-
-				//if(ChildCount > 1)
-				//{
-				//	RemoveViewAt(Children.Count - 1);
-				//	AddView(GetRadioButton(Children[Children.Count - 1], Position.Right));
-				//}
 			}
 		}
 
@@ -94,13 +79,6 @@ namespace Xamarin.Forms.Platform.Android
 
 		public event EventHandler<SelectedPositionChangedEventArgs> SegmentSelected;
 
-		//AColor _strokeColor;
-		AColor _unselectedTintColor;
-		AColor _unSelectedTextColor;
-		AColor _selectedTextColor;
-		AColor _disabledColor = AColor.Gray;
-
-		int _buttonHeight;
 		int _strokeWidth;
 		bool _disposed;
 
@@ -118,15 +96,8 @@ namespace Xamarin.Forms.Platform.Android
 
 		void Build()
 		{
-			_buttonHeight = (int)_context.ToPixels(_defaultControlHeight);
 			_strokeWidth = (int)_context.ToPixels(_defaultStrokeWidth);
 
-			// Temporarily disabling these
-			_unselectedTintColor = _backgroundColor;// Element.IsUnselectedTintColorSet() ? Element.UnselectedTintColor.ToAndroid() : _backgroundColor;
-			_selectedTextColor = AColor.White;// Element.SelectedTextColor.ToAndroid();
-			_unSelectedTextColor = TintColor;// Element.IsUnselectedTextColorSet() ? Element.UnselectedTextColor.ToAndroid() : TintColor;
-
-			//_strokeColor = TintColor;
 			SetBackgroundColor(_backgroundColor);
 
 			Orientation = Orientation.Horizontal;
@@ -166,7 +137,7 @@ namespace Xamarin.Forms.Platform.Android
 						new int[] { ARes.Attribute.StateChecked },
 						new int[] {-ARes.Attribute.StateChecked } },
 						//colors
-						new int[] { _selectedTextColor, TintColor }
+						new int[] { AColor.White, TintColor }
 				);
 			}
 		}
@@ -181,7 +152,7 @@ namespace Xamarin.Forms.Platform.Android
 						new int[] { ARes.Attribute.StateChecked },
 						new int[] {-ARes.Attribute.StateChecked } },
 							//colors
-							new int[] { TintColor, _unselectedTintColor }
+							new int[] { TintColor, BackgroundColor }
 					);
 			}
 		}
@@ -196,18 +167,31 @@ namespace Xamarin.Forms.Platform.Android
 
 		RadioButton GetRadioButton(string title, Position position)
 		{
-			Drawable icon;
+			BitmapDrawable icon;
 			var rb = new RadioButton(_context);
 			rb.SetPadding(_defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding, _defaultButtonPadding);
-			rb.SetBackground(GetRadioButtonStateListDrawable(position));
 			rb.LayoutParameters = new RadioGroup.LayoutParams(0, LayoutParams.MatchParent, 1.0f);
-			//rb.SetHeight(_buttonHeight);
 			rb.Gravity = GravityFlags.Center;
 			rb.SetButtonDrawable(null);
 
+			if(_mode == SegmentMode.Image)
+			{
+				icon = GetImage(title);
+				rb.SetBackground(GetRadioButtonStateListDrawable(position, icon));
+				return rb;
+			}
+
+			rb.SetBackground(GetRadioButtonStateListDrawable(position));
+			rb.Text = title;
+			rb.TextAlignment = AViews.TextAlignment.Center;
+			rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
+			rb.SetAllCaps(true);
+			rb.SetTypeface(null, TypefaceStyle.Bold);
+			rb.SetTextColor(TextColorSelector);
+			
 			//TODO: Reconsider SegmentsViewItem to have title and image
 			switch (_mode)
-			{				
+			{
 				case SegmentMode.ImageLeft:
 					icon = GetImage(title);
 					rb.SetCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
@@ -225,29 +209,21 @@ namespace Xamarin.Forms.Platform.Android
 					rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, null, icon);
 					break;
 				default:
-				case SegmentMode.Text:
-					rb.Text = title;
-					rb.TextAlignment = AViews.TextAlignment.Center;
-
-					rb.SetTextSize(ComplexUnitType.Sp, _defaultTextSize);
-					rb.SetAllCaps(true);
-					rb.SetTypeface(null, TypefaceStyle.Bold);
-					rb.SetTextColor(TextColorSelector);
 					break;
 			}
 			return rb;
 		}
 
-		private Drawable GetImage(ImageSource filePath)
+		private BitmapDrawable GetImage(ImageSource filePath)
 		{
-			var tcs = new TaskCompletionSource<Drawable>();
+			var tcs = new TaskCompletionSource<BitmapDrawable>();
 
 			Task.Run(async () =>
 			{
 				try
 				{
-					var result = await ResourceManager.GetFormsDrawableAsync(Context, filePath);
-					tcs.SetResult(result);
+					var result = await ResourceManager.GetFormsBitmapAsync(Context, filePath);
+					tcs.SetResult(new BitmapDrawable(Resources, result));
 				}
 				catch (Exception ex)
 				{
@@ -258,36 +234,55 @@ namespace Xamarin.Forms.Platform.Android
 			return tcs.Task.Result;
 		}
 
-		StateListDrawable GetRadioButtonStateListDrawable(Position position)
+		StateListDrawable GetRadioButtonStateListDrawable(Position position, BitmapDrawable icon = null)
 		{
 			var drawable = new StateListDrawable();
-			drawable.AddState(new int[] { ARes.Attribute.StateChecked }, GetSegmentDrawable(position));
-			drawable.AddState(new int[] { -ARes.Attribute.StateChecked }, GetSegmentDrawable(position));
+			drawable.AddState(new int[] { ARes.Attribute.StateChecked }, GetSegmentDrawable(position, icon));
+			drawable.AddState(new int[] { -ARes.Attribute.StateChecked }, GetSegmentDrawable(position, icon));
 			return drawable;
 		}
 
-		InsetDrawable GetSegmentDrawable(Position position)
+		Drawable GetSegmentDrawable(Position position, BitmapDrawable icon)
 		{
 			var rect = new GradientDrawable();
+			InsetDrawable insetDrawable = null;
+
 			rect.SetShape(ShapeType.Rectangle);
 			rect.SetStroke(_strokeWidth, TintColor);
 			rect.SetColor(SegmentColorSelector);
-			
+
 			switch (position)
 			{
 				case Position.Left:
 					rect.SetCornerRadii(new float[] { CornerRadius, CornerRadius, 0, 0, 0, 0, CornerRadius, CornerRadius });
-					return new InsetDrawable(rect, 0);
-
+					insetDrawable = new InsetDrawable(rect, 0);
+					break;
 				case Position.Right:
 					rect.SetCornerRadii(new float[] { 0, 0, CornerRadius, CornerRadius, CornerRadius, CornerRadius, 0, 0 });
 					break;
 				default:
 					rect.SetCornerRadius(0);
+					
 					break;
 			}
 
-			return new InsetDrawable(rect, -_strokeWidth, 0, 0, 0);
+			insetDrawable = insetDrawable ?? new InsetDrawable(rect, -_strokeWidth, 0, 0, 0);
+
+			if (_mode == SegmentMode.Image)
+			{
+				if (icon == null)
+					throw new MissingMemberException("BitmapDrawable for icon is missing");
+
+				icon.Gravity = GravityFlags.Center;
+
+				var layers = new Drawable[2];
+				layers[0] = insetDrawable;
+				layers[1] = icon;
+
+				return new LayerDrawable(layers);
+			}
+
+			return insetDrawable;
 		}
 
 		#endregion

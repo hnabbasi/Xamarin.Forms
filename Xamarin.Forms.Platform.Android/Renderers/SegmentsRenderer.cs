@@ -55,7 +55,7 @@ namespace Xamarin.Forms.Platform.Android
 				InvalidateControl();
 		}
 
-		private void InvalidateControl()
+		void InvalidateControl()
 		{
 			_control.SegmentSelected -= SegmentSelected;
 			((INotifyCollectionChanged)Element.Items).CollectionChanged -= SegmentsCollectionChanged;
@@ -68,43 +68,42 @@ namespace Xamarin.Forms.Platform.Android
 
 			((INotifyCollectionChanged)Element.Items).CollectionChanged += SegmentsCollectionChanged;
 
-			PopulateSegments(segments);
-
 			SetNativeControl(_control);
+			PopulateSegments(segments);
 		}
 
 		void PopulateSegments(IList<string> segments)
 		{
 			for (int i = 0; i < segments.Count; i++)
 			{
-				_control.Children.Add(segments[i]);
+				Control.Children.Add(segments[i]);
 			}
 		}
 
-		private void SegmentsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+		void SegmentsCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
 			switch (e.Action)
 			{
 				case NotifyCollectionChangedAction.Add:
 					for (int s = 0; s < e.NewItems.Count; s++)
 					{
-						_control.Children.Add(e.NewItems[s].ToString());
+						Control.Children.Add(e.NewItems[s].ToString());
 					}
 					break;
 				case NotifyCollectionChangedAction.Remove:
 					for (int s = 0; s < e.OldItems.Count; s++)
 					{
-						_control.Children.RemoveAt(e.OldStartingIndex);
+						Control.Children.RemoveAt(e.OldStartingIndex);
 					}
 					break;
 				case NotifyCollectionChangedAction.Reset:
 				default:
-					_control.Children.Clear();
+					Control.Children.Clear();
 					break;
 			}
 		}
 
-		private void SegmentSelected(object sender, SelectedPositionChangedEventArgs e)
+		void SegmentSelected(object sender, SelectedPositionChangedEventArgs e)
 		{
 			Element.SelectedIndex = (int)e.SelectedPosition;
 		}

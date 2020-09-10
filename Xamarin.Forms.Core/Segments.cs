@@ -15,8 +15,7 @@ namespace Xamarin.Forms
 		public event EventHandler<SelectedItemChangedEventArgs> SelectedIndexChanged;
 		public static BindableProperty ColorProperty = BindableProperty.Create(nameof(Color), typeof(Color), typeof(Segments));
 		public static BindableProperty SelectedIndexProperty = BindableProperty.Create(nameof(SelectedIndex), typeof(int), typeof(Segments), 0, propertyChanged: OnSegmentSelected);
-
-		public static BindableProperty DisplayModeProperty = BindableProperty.Create(nameof(DisplayMode), typeof(SegmentMode), typeof(Segments), SegmentMode.Text);
+		public static BindableProperty DisplayModeProperty = BindableProperty.Create(nameof(DisplayMode), typeof(SegmentMode), typeof(Segments));
 
 		public Segments()
 		{
@@ -106,6 +105,7 @@ namespace Xamarin.Forms
 					break;
 			}
 		}
+
 		void AddItems(NotifyCollectionChangedEventArgs e)
 		{
 			int index = e.NewStartingIndex < 0 ? Items.Count : e.NewStartingIndex;
@@ -124,9 +124,12 @@ namespace Xamarin.Forms
 		{
 			if (ItemsSource == null)
 				return;
+
 			((LockableObservableListWrapper)Items).InternalClear();
+
 			foreach (object item in ItemsSource)
 				((LockableObservableListWrapper)Items).InternalAdd(GetDisplayMember(item));
+
 			UpdateSelectedItem(SelectedIndex);
 		}
 
@@ -185,7 +188,7 @@ namespace Xamarin.Forms
 			set { SetValue(ColorProperty, value); }
 		}
 
-		// IElementConfiguration<>
+		// IElementConfiguration<T>
 		public IPlatformElementConfiguration<T, Segments> On<T>() where T : IConfigPlatform
 		{
 			return _platformConfigurationRegistry.Value.On<T>();
@@ -195,13 +198,15 @@ namespace Xamarin.Forms
 	}
 
 	/// <summary>
-	/// Segment mode e.g. Text, Image, Both (Android ONLY)
+	/// Segment mode e.g. Text, Image or both<br/>
+	/// NOTE:<br/>
+	/// iOS supports Text or Image.<br/>
+	/// Android supports Text, Image, ImageLeft, ImageTop, ImageRight, and ImageBottom<br/>
 	/// </summary>
 	public enum SegmentMode
 	{
 		Text,
 		Image,
-		Both,
 		ImageLeft,
 		ImageRight,
 		ImageTop,

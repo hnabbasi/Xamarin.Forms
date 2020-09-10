@@ -531,26 +531,21 @@ namespace Xamarin.Forms.Controls
 
 		static (Func<View> ctor, NamedAction[] methods) GetSegments()
 		{
-			var texts = new List<string>
-			{
+			var texts = new string[] {
 				"Item 1",
 				"Item 2",
 				"Item 3"
 			};
 
-			var icons = new List<string> {
+			var icons = new string[] {
 				"https://raw.githubusercontent.com/xamarin/Xamarin.Forms/master/Xamarin.Forms.Controls/coffee.png",
 				"https://raw.githubusercontent.com/xamarin/Xamarin.Forms/master/Xamarin.Forms.Controls/coffee.png",
 				"https://raw.githubusercontent.com/xamarin/Xamarin.Forms/master/Xamarin.Forms.Controls/coffee.png"
 			};
 
-			return (ctor: () =>
-			{
+			return (ctor: () => {
 				var segments = new Segments();
-				if (segments.DisplayMode == SegmentMode.Text)
-					segments.ItemsSource = texts;
-				else
-					segments.ItemsSource = icons;
+				segments.ItemsSource = segments.DisplayMode == SegmentMode.Text ? texts : icons;
 				return segments;
 			}, methods: new[] {
 					new NamedAction {
