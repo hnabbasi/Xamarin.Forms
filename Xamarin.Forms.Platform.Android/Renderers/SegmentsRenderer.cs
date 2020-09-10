@@ -57,19 +57,21 @@ namespace Xamarin.Forms.Platform.Android
 
 		void InvalidateControl()
 		{
-			_control.SegmentSelected -= SegmentSelected;
+			Control.SegmentSelected -= SegmentSelected;
 			((INotifyCollectionChanged)Element.Items).CollectionChanged -= SegmentsCollectionChanged;
 		}
 
 		void InitializeControl(IList<string> segments)
 		{
 			_control = new FormsSegments(_context);
-			_control.SegmentSelected += SegmentSelected;
 
 			((INotifyCollectionChanged)Element.Items).CollectionChanged += SegmentsCollectionChanged;
 
 			SetNativeControl(_control);
 			PopulateSegments(segments);
+
+			Control.DisplayMode = Element.DisplayMode;
+			Control.SegmentSelected += SegmentSelected;
 		}
 
 		void PopulateSegments(IList<string> segments)

@@ -87,18 +87,18 @@ namespace Xamarin.Forms.Controls.GalleryPages.PlatformSpecificsGalleries
 						{
 							Padding = new Thickness(20.0),
 							Children = {
-								//new Label { Text = "Text" },
+								new Label { Text = "Text" },
 								_element,
-								//new Label { Text = "Image" },
-								//_elementIcons,
-								//new Label { Text = "ImageLeft" },
-								//_elementLeft,
-								//new Label { Text = "ImageRight" },
-								//_elementRight,
-								//new Label { Text = "ImageTop" },
-								//_elementTop,
-								//new Label { Text = "ImageBottom" },
-								//_elementBottom
+								new Label { Text = "Image" },
+								_elementIcons,
+								new Label { Text = "ImageLeft" },
+								_elementLeft,
+								new Label { Text = "ImageRight" },
+								_elementRight,
+								new Label { Text = "ImageTop" },
+								_elementTop,
+								new Label { Text = "ImageBottom" },
+								_elementBottom
 							}
 						}
 					}

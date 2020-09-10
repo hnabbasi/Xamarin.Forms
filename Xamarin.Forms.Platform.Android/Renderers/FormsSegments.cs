@@ -174,7 +174,7 @@ namespace Xamarin.Forms.Platform.Android
 			rb.Gravity = GravityFlags.Center;
 			rb.SetButtonDrawable(null);
 
-			if(_mode == SegmentMode.Image)
+			if(DisplayMode == SegmentMode.Image)
 			{
 				icon = GetImage(title);
 				rb.SetBackground(GetRadioButtonStateListDrawable(position, icon));
@@ -190,7 +190,7 @@ namespace Xamarin.Forms.Platform.Android
 			rb.SetTextColor(TextColorSelector);
 			
 			//TODO: Reconsider SegmentsViewItem to have title and image
-			switch (_mode)
+			switch (DisplayMode)
 			{
 				case SegmentMode.ImageLeft:
 					icon = GetImage(title);
