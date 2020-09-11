@@ -23,29 +23,29 @@ namespace Xamarin.Forms.Controls.GalleryPages.PlatformSpecificsGalleries
 			ItemsSource = Icons
 		};
 
-		readonly Segments _elementLeft = new Segments
-		{
-			DisplayMode = SegmentMode.ImageLeft,
-			ItemsSource = Icons
-		};
+		//readonly Segments _elementLeft = new Segments
+		//{
+		//	DisplayMode = SegmentMode.ImageLeft,
+		//	ItemsSource = Icons
+		//};
 
-		readonly Segments _elementRight = new Segments
-		{
-			DisplayMode = SegmentMode.ImageRight,
-			ItemsSource = Icons
-		};
+		//readonly Segments _elementRight = new Segments
+		//{
+		//	DisplayMode = SegmentMode.ImageRight,
+		//	ItemsSource = Icons
+		//};
 
-		readonly Segments _elementTop = new Segments
-		{
-			DisplayMode = SegmentMode.ImageTop,
-			ItemsSource = Icons
-		};
+		//readonly Segments _elementTop = new Segments
+		//{
+		//	DisplayMode = SegmentMode.ImageTop,
+		//	ItemsSource = Icons
+		//};
 
-		readonly Segments _elementBottom = new Segments
-		{
-			DisplayMode = SegmentMode.ImageBottom,
-			ItemsSource = Icons
-		};
+		//readonly Segments _elementBottom = new Segments
+		//{
+		//	DisplayMode = SegmentMode.ImageBottom,
+		//	ItemsSource = Icons
+		//};
 
 		readonly Stepper _radiusStepper = new Stepper
 		{
@@ -91,14 +91,14 @@ namespace Xamarin.Forms.Controls.GalleryPages.PlatformSpecificsGalleries
 								_element,
 								new Label { Text = "Image" },
 								_elementIcons,
-								new Label { Text = "ImageLeft" },
-								_elementLeft,
-								new Label { Text = "ImageRight" },
-								_elementRight,
-								new Label { Text = "ImageTop" },
-								_elementTop,
-								new Label { Text = "ImageBottom" },
-								_elementBottom
+								//new Label { Text = "ImageLeft" },
+								//_elementLeft,
+								//new Label { Text = "ImageRight" },
+								//_elementRight,
+								//new Label { Text = "ImageTop" },
+								//_elementTop,
+								//new Label { Text = "ImageBottom" },
+								//_elementBottom
 							}
 						}
 					}
@@ -110,10 +110,10 @@ namespace Xamarin.Forms.Controls.GalleryPages.PlatformSpecificsGalleries
 		{
 			_element.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
 			_elementIcons.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
-			_elementLeft.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
-			_elementRight.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
-			_elementTop.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
-			_elementBottom.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
+			//_elementLeft.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
+			//_elementRight.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
+			//_elementTop.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
+			//_elementBottom.On<PlatformConfiguration.Android>().SetCornerRadius(e.NewValue);
 
 			_radiusValue.Text = e.NewValue.ToString();
 		}

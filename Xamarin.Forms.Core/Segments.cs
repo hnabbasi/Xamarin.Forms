@@ -207,9 +207,9 @@ namespace Xamarin.Forms
 	{
 		Text,
 		Image,
-		ImageLeft,
-		ImageRight,
-		ImageTop,
-		ImageBottom
+		//ImageLeft,
+		//ImageRight,
+		//ImageTop,
+		//ImageBottom
 	}
 }

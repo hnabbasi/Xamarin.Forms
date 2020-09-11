@@ -66,7 +66,6 @@ namespace Xamarin.Forms.Platform.iOS
 						Console.WriteLine("ImageSource is null");
 					break;
 				default:
-				case SegmentMode.Both:// Not native to iOS OTB.
 				case SegmentMode.Text:
 					Control.InsertSegment(segment, position, false);
 					break;

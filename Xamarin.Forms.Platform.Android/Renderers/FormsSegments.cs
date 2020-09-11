@@ -189,28 +189,29 @@ namespace Xamarin.Forms.Platform.Android
 			rb.SetTypeface(null, TypefaceStyle.Bold);
 			rb.SetTextColor(TextColorSelector);
 			
-			//TODO: Reconsider SegmentsViewItem to have title and image
-			switch (DisplayMode)
-			{
-				case SegmentMode.ImageLeft:
-					icon = GetImage(title);
-					rb.SetCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
-					break;
-				case SegmentMode.ImageTop:
-					icon = GetImage(title);
-					rb.SetCompoundDrawablesWithIntrinsicBounds(null, icon, null, null);
-					break;
-				case SegmentMode.ImageRight:
-					icon = GetImage(title);
-					rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, icon, null);
-					break;
-				case SegmentMode.ImageBottom:
-					icon = GetImage(title);
-					rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, null, icon);
-					break;
-				default:
-					break;
-			}
+			//TODO: Reconsider SegmentsItem to have title and image
+			//switch (DisplayMode)
+			//{
+			//	case SegmentMode.ImageLeft:
+			//		icon = GetImage(title);
+			//		rb.SetCompoundDrawablesWithIntrinsicBounds(icon, null, null, null);
+			//		break;
+			//	case SegmentMode.ImageTop:
+			//		icon = GetImage(title);
+			//		rb.SetCompoundDrawablesWithIntrinsicBounds(null, icon, null, null);
+			//		break;
+			//	case SegmentMode.ImageRight:
+			//		icon = GetImage(title);
+			//		rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, icon, null);
+			//		break;
+			//	case SegmentMode.ImageBottom:
+			//		icon = GetImage(title);
+			//		rb.SetCompoundDrawablesWithIntrinsicBounds(null, null, null, icon);
+			//		break;
+			//	default:
+			//		break;
+			//}
+
 			return rb;
 		}
 
